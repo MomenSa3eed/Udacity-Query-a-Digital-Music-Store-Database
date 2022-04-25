@@ -1,0 +1,67 @@
+/* Query 1 */
+SELECT c.CustomerId,
+       CONCAT(c.FirstName, ' ', c.LastName) AS customer_name,
+       SUM(i.Total) AS total_spent
+FROM invoice i
+JOIN customer c ON c.CustomerId = i.CustomerId
+GROUP BY 1,
+         2
+ORDER BY 3 DESC
+LIMIT 10;
+
+/* Query 2 */
+SELECT ar.ArtistId,
+       ar.Name,
+       COUNT(*) AS num_songs
+FROM artist ar
+JOIN album al ON ar.ArtistId = al.ArtistId
+JOIN track t ON al.AlbumId = t.AlbumId
+JOIN genre g ON t.GenreId = g.GenreId
+WHERE g.Name = 'Rock'
+GROUP BY 1,
+         2
+ORDER BY 3 DESC
+LIMIT 10;
+
+/* Query 3 */
+SELECT ar.Name,
+       il.UnitPrice * COUNT(*) AS earnings
+FROM artist ar
+JOIN album al ON ar.ArtistId = al.ArtistId
+JOIN track t ON al.AlbumId = t.AlbumId
+JOIN invoiceline il ON t.TrackId = il.TrackId
+JOIN invoice i ON i.InvoiceId = il.InvoiceId
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
+
+/* Query 4 */
+
+		WITH t1 AS
+  (SELECT g.name,
+          SUM(il.UnitPrice*il.quantity) AS total_sales
+   FROM genre g
+   JOIN track t ON g.GenreId = t.GenreId
+   JOIN invoiceline il ON t.TrackId = il.TrackId
+   JOIN invoice i ON il.InvoiceId = i.InvoiceId
+   GROUP BY 1
+   ORDER BY 2 DESC
+   LIMIT 5),
+                   t2 AS
+  (SELECT extract(YEAR
+                  FROM i.invoicedate) AS YEAR,
+          g.name,
+          SUM(il.UnitPrice*il.quantity) AS total_sales
+   FROM genre g
+   JOIN track t ON g.GenreId = t.GenreId
+   JOIN invoiceline il ON t.TrackId = il.TrackId
+   JOIN invoice i ON il.InvoiceId = i.InvoiceId
+   GROUP BY 2,
+            1)
+SELECT t2.year,
+       t2.name,
+       t2.total_sales
+FROM t1
+JOIN t2 ON t1.name = t2.name
+ORDER BY 1,
+         2 DESC;
